@@ -1,14 +1,15 @@
 {
   "name": "hexchess",
-  "version": "0.0.1",
-  "description": "",
-  "main": "index.js",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "dev": "http-server . -c-1"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
   },
-  "author": "Jack A. Arrington",
-  "license": "UNLICENSED",
   "devDependencies": {
-    "http-server": "^14.1.1"
+    "typescript": "^5.0.2",
+    "vite": "^4.4.5"
   }
 }
