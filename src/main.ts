@@ -33,7 +33,7 @@ function drawHex(ctx: CanvasRenderingContext2D, x: number, y: number, r: number,
   ctx.fill()
 }
 
-document.addEventListener('DOMContentLoaded', (_) => {
+function main() {
   const canvas = document.getElementById('canvas') as HTMLCanvasElement
   const ctx = canvas.getContext('2d')!
   const dpr = window.devicePixelRatio
@@ -59,5 +59,7 @@ document.addEventListener('DOMContentLoaded', (_) => {
     }
     drawHex(ctx, px, py, size, color)
   })
-})
+}
+
+document.addEventListener('DOMContentLoaded', (_) => main())
 
