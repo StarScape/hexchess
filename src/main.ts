@@ -1,3 +1,5 @@
+import ChessGame from './model/Game.ts'
+
 const N = 5
 
 const isGray = (q: number, r: number) => (q - r) % 3 === 0
@@ -10,7 +12,7 @@ function axialToPixel(size: number, q: number, r: number, offset = 0) {
   return [x + offset, y + offset]
 }
 
-function forEachHex(f: (a: number, b: number) => void): void {
+function forEachHex(f: (q: number, r: number) => void): void {
   for (let q = -N; q <= N; q++) {
     for (let r = Math.max(-N, -q-N); r <= Math.min(N, -q+N); r++) {
       f(q, r)
@@ -59,6 +61,8 @@ function main() {
     }
     drawHex(ctx, px, py, size, color)
   })
+
+  const game = new ChessGame()
 }
 
 document.addEventListener('DOMContentLoaded', (_) => main())

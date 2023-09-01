@@ -1,6 +1,5 @@
 TODO:
 
-- Get clipart for chess pieces
 - Get pawns set up and displaying
 - Get pawn movement working
 - Get rook movement working
