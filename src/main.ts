@@ -1,38 +1,68 @@
-import ChessGame from './model/Game.ts'
+import ChessGame, { Piece, PieceType, PlayerColor } from './model/Game.ts'
 
-const N = 5
-
-const isGray = (q: number, r: number) => (q - r) % 3 === 0
-const isWhite = (q: number, r: number) => (q - r - 1) % 3 === 0
-const isBlack = (q: number, r: number) => (q - r - 2) % 3 === 0
-
-function axialToPixel(size: number, q: number, r: number, offset = 0) {
-  const x = size * (1.5 * q)
-  const y = size * (Math.sqrt(3)/2 * q + Math.sqrt(3) * r)
-  return [x + offset, y + offset]
+interface GraphicsInfo {
+  hexSizePx: number
+  canvasSizePx: number
+  ctx: CanvasRenderingContext2D
 }
 
-function forEachHex(f: (q: number, r: number) => void): void {
-  for (let q = -N; q <= N; q++) {
-    for (let r = Math.max(-N, -q-N); r <= Math.min(N, -q+N); r++) {
-      f(q, r)
-    }
+type Images = Record<PlayerColor, Record<PieceType, CanvasImageSource>>
+const images: Images = {
+  [PlayerColor.White]: {
+    [PieceType.Pawn]: document.getElementById('img-pawn-white') as HTMLImageElement,
+    [PieceType.Rook]: document.getElementById('img-rook-white') as HTMLImageElement,
+    [PieceType.Knight]: document.getElementById('img-knight-white') as HTMLImageElement,
+    [PieceType.Bishop]: document.getElementById('img-bishop-white') as HTMLImageElement,
+    [PieceType.Queen]: document.getElementById('img-queen-white') as HTMLImageElement,
+    [PieceType.King]: document.getElementById('img-king-white') as HTMLImageElement,
+  },
+  [PlayerColor.Black]: {
+    [PieceType.Pawn]: document.getElementById('img-pawn-black') as HTMLImageElement,
+    [PieceType.Rook]: document.getElementById('img-rook-black') as HTMLImageElement,
+    [PieceType.Knight]: document.getElementById('img-knight-black') as HTMLImageElement,
+    [PieceType.Bishop]: document.getElementById('img-bishop-black') as HTMLImageElement,
+    [PieceType.Queen]: document.getElementById('img-queen-black') as HTMLImageElement,
+    [PieceType.King]: document.getElementById('img-king-black') as HTMLImageElement,
   }
 }
 
-function drawHex(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, color: string) {
-  const a = 2 * Math.PI / 6;
+function axialToPixel(q: number, r: number, hexSize: number, canvasSizePx: number) {
+  const offset = canvasSizePx / 2
+  const x = hexSize * (1.5 * q)
+  const y = hexSize * (Math.sqrt(3)/2 * q + Math.sqrt(3) * r)
+  return [x + offset, y + offset]
+}
 
+function drawHex(ctx: CanvasRenderingContext2D, px: number, py: number, r: number, color: string) {
+  const a = 2 * Math.PI / 6;
   ctx.strokeStyle = 'black'
   ctx.fillStyle = color
   ctx.lineWidth = 2
   ctx.beginPath()
   for (let i = 0; i < 6; i++) {
-    ctx.lineTo(x + r * Math.cos(a * i), y + r * Math.sin(a * i));
+    ctx.lineTo(px + r * Math.cos(a * i), py + r * Math.sin(a * i))
   }
   ctx.closePath()
   ctx.stroke()
   ctx.fill()
+}
+
+function drawPiece(px: number, py: number, piece: Piece, graphics: GraphicsInfo) {
+  const {ctx} = graphics
+  const imgSize = graphics.hexSizePx
+  ctx.fillStyle = 'red'
+  ctx.drawImage(images[piece.color][piece.type], px - imgSize/2, py - imgSize/2, imgSize, imgSize)
+}
+
+function drawBoard(game: ChessGame, graphics: GraphicsInfo) {
+  const {ctx, hexSizePx, canvasSizePx} = graphics
+  game.board.forEach((hex) => {
+    const [px, py] = axialToPixel(hex.q, hex.r, hexSizePx, canvasSizePx)
+    drawHex(ctx, px, py, hexSizePx, hex.color)
+    if (hex.piece) {
+      drawPiece(px, py, hex.piece, graphics)
+    }
+  })
 }
 
 function main() {
@@ -46,23 +76,13 @@ function main() {
   canvas.height = canvasSize * dpr
   ctx.scale(dpr, dpr)
 
-  const size = 40
-  const offset = canvasSize/2
-
-  forEachHex((q, r) => {
-    const [px, py] = axialToPixel(size, q, r, offset)
-    let color
-    if (isBlack(q, r)) {
-      color = "black"
-    } else if (isGray(q, r)) {
-      color = "gray"
-    } else {
-      color = "white"
-    }
-    drawHex(ctx, px, py, size, color)
-  })
-
+  const graphics: GraphicsInfo = {
+    canvasSizePx: canvasSize,
+    hexSizePx: 40,
+    ctx: ctx,
+  }
   const game = new ChessGame()
+  drawBoard(game, graphics)
 }
 
 document.addEventListener('DOMContentLoaded', (_) => main())
