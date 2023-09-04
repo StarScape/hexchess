@@ -64,6 +64,17 @@ export class HexBoard {
     return new HexBoard()
   }
 
+  static isValidHex(q: number, r: number): boolean {
+    const N = HexBoard.N
+    if (r >= 0 && r <= N) {
+      return q >= -N && q <= N-r
+    } else if (r >= -N) {
+      return q <= N && q >= -(N+r)
+    } else {
+      return false
+    }
+  }
+
   private hexes: Array<Array<Hex>>
 
   constructor() {
@@ -124,7 +135,7 @@ export class HexBoard {
 
   }
 
-  private idxs(q: number, r: number): Array<number> {
+  private idxs(q: number, r: number): [ri: number, qi: number] {
     return [r + HexBoard.N, Math.min(HexBoard.N+r, HexBoard.N) + q]
   }
 
@@ -145,9 +156,32 @@ export class HexBoard {
       }
     }
   }
+
+  getValidMoves(q: number, r: number, piece: Piece): Array<[number, number]> {
+    const moves: Array<[number, number]> = []
+
+    // But wHy No PoLyMoRpHiSm? It's chess. It doesn't *need* to be extensible.
+    // It's never going to change.
+    switch (piece.type) {
+      case PieceType.Pawn:
+        const colorDir = piece.color === PlayerColor.White ? -1 : 1
+        moves.push([q, r + colorDir])
+        break
+      default:
+        break
+    }
+    return moves
+  }
+
+  movePiece(q1: number, r1: number, q2: number, r2: number) {
+    const [r1i, q1i] = this.idxs(q1, r1)
+    const [r2i, q2i] = this.idxs(q2, r2)
+    this.hexes[r2i][q2i].piece = this.hexes[r1i][q1i].piece
+    this.hexes[r1i][q1i].piece = undefined
+  }
 }
 
 export default class ChessGame {
-  turn: "black" | "white" = "white";
+  turn: PlayerColor = PlayerColor.White;
   board: HexBoard = HexBoard.default()
 }
