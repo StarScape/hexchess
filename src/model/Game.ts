@@ -1,3 +1,5 @@
+type Axial = [q: number, r: number]
+
 export enum HexColor {
   Black = "black",
   Grey = "grey",
@@ -21,6 +23,7 @@ export enum PieceType {
 export class Piece {
   type: PieceType
   color: PlayerColor
+  hasMoved: boolean = false
 
   constructor(type: PieceType, color: PlayerColor) {
     this.type = type
@@ -158,15 +161,45 @@ export class HexBoard {
     }
   }
 
-  getValidMoves(q: number, r: number, piece: Piece): Array<[number, number]> {
+  getLine([q, r]: Axial, [dirQ, dirR]: Axial, limit: number = Number.POSITIVE_INFINITY): Array<Axial> {
+    const hexes: Array<Axial> = []
+    let currQ = q
+    let currR = r
+    while (hexes.length < limit) {
+      const hexInLine: Axial = [currQ + dirQ, currR + dirR]
+      // don't add if there is piece of same color at hex in line
+      if (this.at(...hexInLine).piece?.color === this.at(q, r).piece?.color) {
+        break;
+      }
+      hexes.push(hexInLine)
+      if (this.at(...hexInLine).piece) {
+        break;
+      }
+      currQ = hexInLine[0]
+      currR = hexInLine[1]
+    }
+    return hexes
+  }
+
+  getValidMoves(q: number, r: number, piece: Piece): Array<Axial> {
     const moves: Array<[number, number]> = []
+    const addMoves = (...ms: Array<Axial>) => {
+      for (const [toQ, toR] of ms) {
+        if (HexBoard.isValidHex(toQ, toR  ) && this.at(toQ, toR).piece?.color !== piece.color) {
+          moves.push([toQ, toR])
+        }
+      }
+    }
 
     // But wHy No PoLyMoRpHiSm? It's chess. It doesn't *need* to be extensible.
     // It's never going to change.
     switch (piece.type) {
       case PieceType.Pawn:
         const colorDir = piece.color === PlayerColor.White ? -1 : 1
-        moves.push([q, r + colorDir])
+        // todo: prevent jumping
+        const pawnMoves = this.getLine([q, r], [0, colorDir], piece.hasMoved ? 1 : 2)
+        addMoves(...pawnMoves)
+        // todo: diagonal taking
         break
       default:
         break
@@ -177,8 +210,10 @@ export class HexBoard {
   movePiece(q1: number, r1: number, q2: number, r2: number) {
     const [r1i, q1i] = this.idxs(q1, r1)
     const [r2i, q2i] = this.idxs(q2, r2)
-    this.hexes[r2i][q2i].piece = this.hexes[r1i][q1i].piece
+    const pieceToMove = this.hexes[r1i][q1i].piece!
+    this.hexes[r2i][q2i].piece = pieceToMove
     this.hexes[r1i][q1i].piece = undefined
+    pieceToMove.hasMoved = true
   }
 }
 

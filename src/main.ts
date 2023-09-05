@@ -1,6 +1,4 @@
-import ChessGame, { HexBoard, Hex, Piece, PieceType, PlayerColor } from './model/Game.ts'
-
-type Axial = [q: number, r: number]
+import ChessGame, { HexBoard, Hex, Piece, PieceType, PlayerColor, Axial } from './model/Game.ts'
 
 interface GraphicsInfo {
   canvas: HTMLCanvasElement
