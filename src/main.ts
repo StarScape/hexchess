@@ -116,6 +116,14 @@ function drawBoard(game: ChessGame, ui: GameUI, graphics: GraphicsInfo) {
   })
 }
 
+function clickedLocation(clientX: number, clientY: number, graphics: GraphicsInfo): [q: number, r: number] {
+  return pixelToAxial(
+    clientX - graphics.canvas.offsetLeft,
+    clientY - graphics.canvas.offsetTop,
+    graphics
+  )
+}
+
 class GameUI {
   selectedHex?: Hex
   validMoves: Array<[number, number]> = []
@@ -129,35 +137,34 @@ class GameUI {
     }
     return false
   }
-}
 
-function clickedLocation(clientX: number, clientY: number, graphics: GraphicsInfo): [q: number, r: number] {
-  return pixelToAxial(
-    clientX - graphics.canvas.offsetLeft,
-    clientY - graphics.canvas.offsetTop,
-    graphics
-  )
-}
+  handleMovePiece(q: number, r: number, game: ChessGame) {
+    const hex = game.board.at(q, r)
+    if (hex.piece && hex.piece.color === game.turn) {
+      this.handleSelectPiece(q,r, game)
+    } else {
+      if (this.isValidMove(q, r)) {
+        game.movePiece(this.selectedHex!.q, this.selectedHex!.r, q, r)
+        this.selectedHex = undefined
+        this.validMoves = []
+      }
+    }
+  }
 
-function handleMovePiece(q: number, r: number, game: ChessGame, ui: GameUI, graphics: GraphicsInfo) {
-  const hex = game.board.at(q, r)
-  if (hex.piece && hex.piece.color === game.turn) {
-    handleSelectPiece(q,r, game, ui, graphics)
-  } else {
-    if (ui.isValidMove(q, r)) {
-      game.board.movePiece(ui.selectedHex!.q, ui.selectedHex!.r, q, r)
+  handleSelectPiece(q: number, r: number, game: ChessGame) {
+    const hex = game.board.at(q, r)
+    if (hex.piece && hex.piece.color === game.turn) {
+      this.selectedHex = game.board.at(q, r)
+      this.validMoves = game.board.getValidMoves(q, r, hex.piece)
+    } else {
+      // play 'bonk' sound
     }
   }
 }
 
-function handleSelectPiece(q: number, r: number, game: ChessGame, ui: GameUI, graphics: GraphicsInfo) {
-  const hex = game.board.at(q, r)
-  if (hex.piece && hex.piece.color === game.turn) {
-    ui.selectedHex = game.board.at(q, r)
-    ui.validMoves = game.board.getValidMoves(q, r, hex.piece)
-  } else {
-    // play 'bonk' sound
-  }
+function updateTurnImg(game: ChessGame) {
+  const img = images[game.turn][PieceType.Pawn] as HTMLImageElement
+  (document.querySelector('#current-turn-img') as HTMLImageElement).src = img.src
 }
 
 function main() {
@@ -185,23 +192,14 @@ function main() {
     const [q, r] = clickedLocation(e.clientX, e.clientY, graphics)
     if (HexBoard.isValidHex(q, r)) {
       if (ui.selectedHex) {
-        handleMovePiece(q, r, game, ui, graphics)
+        ui.handleMovePiece(q, r, game)
       } else {
-        handleSelectPiece(q, r, game, ui, graphics)
+        ui.handleSelectPiece(q, r, game)
       }
       drawBoard(game, ui, graphics)
+      updateTurnImg(game)
     }
   })
 }
 
-// function gameLoop() {
-//   drawBoard()
-//   let pieceMoved = false
-//   while (!pieceMoved) {
-//     acceptUserInput() // for selection or movement
-//     drawBoard()
-//   }
-// }
-
 document.addEventListener('DOMContentLoaded', (_) => main())
-

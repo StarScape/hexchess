@@ -60,8 +60,56 @@ export class HexBoard {
   /**
    * @returns Default starting board
    */
-  static default() {
-    return new HexBoard()
+  static default(): HexBoard {
+    const board = new HexBoard()
+
+    board.place(-4, 5, new Piece(PieceType.Pawn, PlayerColor.White))
+    board.place(-3, 4, new Piece(PieceType.Pawn, PlayerColor.White))
+    board.place(-2, 3, new Piece(PieceType.Pawn, PlayerColor.White))
+    board.place(-1, 2, new Piece(PieceType.Pawn, PlayerColor.White))
+    board.place(0, 1, new Piece(PieceType.Pawn, PlayerColor.White))
+    board.place(1, 1, new Piece(PieceType.Pawn, PlayerColor.White))
+    board.place(2, 1, new Piece(PieceType.Pawn, PlayerColor.White))
+    board.place(3, 1, new Piece(PieceType.Pawn, PlayerColor.White))
+    board.place(4, 1, new Piece(PieceType.Pawn, PlayerColor.White))
+
+    board.place(-3, 5, new Piece(PieceType.Rook, PlayerColor.White))
+    board.place(3, 2, new Piece(PieceType.Rook, PlayerColor.White))
+
+    board.place(-2, 5, new Piece(PieceType.Knight, PlayerColor.White))
+    board.place(2, 3, new Piece(PieceType.Knight, PlayerColor.White))
+
+    board.place(0, 3, new Piece(PieceType.Bishop, PlayerColor.White))
+    board.place(0, 4, new Piece(PieceType.Bishop, PlayerColor.White))
+    board.place(0, 5, new Piece(PieceType.Bishop, PlayerColor.White))
+
+    board.place(1, 4, new Piece(PieceType.King, PlayerColor.White))
+    board.place(-1, 5, new Piece(PieceType.Queen, PlayerColor.White))
+
+    board.place(-4, -1, new Piece(PieceType.Pawn, PlayerColor.Black))
+    board.place(-3, -1, new Piece(PieceType.Pawn, PlayerColor.Black))
+    board.place(-2, -1, new Piece(PieceType.Pawn, PlayerColor.Black))
+    board.place(-1, -1, new Piece(PieceType.Pawn, PlayerColor.Black))
+    board.place(0, -1, new Piece(PieceType.Pawn, PlayerColor.Black))
+    board.place(1, -2, new Piece(PieceType.Pawn, PlayerColor.Black))
+    board.place(2, -3, new Piece(PieceType.Pawn, PlayerColor.Black))
+    board.place(3, -4, new Piece(PieceType.Pawn, PlayerColor.Black))
+    board.place(4, -5, new Piece(PieceType.Pawn, PlayerColor.Black))
+
+    board.place(-3, -2, new Piece(PieceType.Rook, PlayerColor.Black))
+    board.place(3, -5, new Piece(PieceType.Rook, PlayerColor.Black))
+
+    board.place(-2, -3, new Piece(PieceType.Knight, PlayerColor.Black))
+    board.place(2, -5, new Piece(PieceType.Knight, PlayerColor.Black))
+
+    board.place(0, -3, new Piece(PieceType.Bishop, PlayerColor.Black))
+    board.place(0, -4, new Piece(PieceType.Bishop, PlayerColor.Black))
+    board.place(0, -5, new Piece(PieceType.Bishop, PlayerColor.Black))
+
+    board.place(1, -5, new Piece(PieceType.King, PlayerColor.Black))
+    board.place(-1, -4, new Piece(PieceType.Queen, PlayerColor.Black))
+
+    return board
   }
 
   static isValidHex(q: number, r: number): boolean {
@@ -86,53 +134,6 @@ export class HexBoard {
       }
       this.hexes.push(qArr);
     }
-
-    this.place(-4, 5, new Piece(PieceType.Pawn, PlayerColor.White))
-    this.place(-3, 4, new Piece(PieceType.Pawn, PlayerColor.White))
-    this.place(-2, 3, new Piece(PieceType.Pawn, PlayerColor.White))
-    this.place(-1, 2, new Piece(PieceType.Pawn, PlayerColor.White))
-    this.place(0, 1, new Piece(PieceType.Pawn, PlayerColor.White))
-    this.place(1, 1, new Piece(PieceType.Pawn, PlayerColor.White))
-    this.place(2, 1, new Piece(PieceType.Pawn, PlayerColor.White))
-    this.place(3, 1, new Piece(PieceType.Pawn, PlayerColor.White))
-    this.place(4, 1, new Piece(PieceType.Pawn, PlayerColor.White))
-
-    this.place(-3, 5, new Piece(PieceType.Rook, PlayerColor.White))
-    this.place(3, 2, new Piece(PieceType.Rook, PlayerColor.White))
-
-    this.place(-2, 5, new Piece(PieceType.Knight, PlayerColor.White))
-    this.place(2, 3, new Piece(PieceType.Knight, PlayerColor.White))
-
-    this.place(0, 3, new Piece(PieceType.Bishop, PlayerColor.White))
-    this.place(0, 4, new Piece(PieceType.Bishop, PlayerColor.White))
-    this.place(0, 5, new Piece(PieceType.Bishop, PlayerColor.White))
-
-    this.place(1, 4, new Piece(PieceType.King, PlayerColor.White))
-    this.place(-1, 5, new Piece(PieceType.Queen, PlayerColor.White))
-
-    this.place(-4, -1, new Piece(PieceType.Pawn, PlayerColor.Black))
-    this.place(-3, -1, new Piece(PieceType.Pawn, PlayerColor.Black))
-    this.place(-2, -1, new Piece(PieceType.Pawn, PlayerColor.Black))
-    this.place(-1, -1, new Piece(PieceType.Pawn, PlayerColor.Black))
-    this.place(0, -1, new Piece(PieceType.Pawn, PlayerColor.Black))
-    this.place(1, -2, new Piece(PieceType.Pawn, PlayerColor.Black))
-    this.place(2, -3, new Piece(PieceType.Pawn, PlayerColor.Black))
-    this.place(3, -4, new Piece(PieceType.Pawn, PlayerColor.Black))
-    this.place(4, -5, new Piece(PieceType.Pawn, PlayerColor.Black))
-
-    this.place(-3, -2, new Piece(PieceType.Rook, PlayerColor.Black))
-    this.place(3, -5, new Piece(PieceType.Rook, PlayerColor.Black))
-
-    this.place(-2, -3, new Piece(PieceType.Knight, PlayerColor.Black))
-    this.place(2, -5, new Piece(PieceType.Knight, PlayerColor.Black))
-
-    this.place(0, -3, new Piece(PieceType.Bishop, PlayerColor.Black))
-    this.place(0, -4, new Piece(PieceType.Bishop, PlayerColor.Black))
-    this.place(0, -5, new Piece(PieceType.Bishop, PlayerColor.Black))
-
-    this.place(1, -5, new Piece(PieceType.King, PlayerColor.Black))
-    this.place(-1, -4, new Piece(PieceType.Queen, PlayerColor.Black))
-
   }
 
   private idxs(q: number, r: number): [ri: number, qi: number] {
@@ -184,4 +185,12 @@ export class HexBoard {
 export default class ChessGame {
   turn: PlayerColor = PlayerColor.White;
   board: HexBoard = HexBoard.default()
+
+  /**
+   * Moves piece on board and switches turn
+   */
+  movePiece(q1: number, r1: number, q2: number, r2: number) {
+    this.board.movePiece(q1, r1, q2, r2)
+    this.turn = this.turn === PlayerColor.White ? PlayerColor.Black : PlayerColor.White
+  }
 }
