@@ -183,7 +183,7 @@ function main() {
     hexSizePx: 40,
   }
   const ui = new GameUI()
-  const game = new ChessGame(HexBoard.singlePieceBoard(PieceType.King))
+  const game = new ChessGame(HexBoard.singlePieceBoard(PieceType.Queen))
   // game.board.place(1, -2, new Piece(PieceType.Pawn, PlayerColor.Black))
   // game.board.place(1, -2, new Piece(PieceType.Pawn, PlayerColor.White))
   // const game = new ChessGame()

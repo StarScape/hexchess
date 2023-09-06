@@ -6,7 +6,7 @@ TODO:
 - [x] Bishop movement
 - [ ] Knight movement
 - [ ] Queen movement
-- [ ] King movement
+- [x] King movement
 - [ ] Network between two clients
 - [ ] Get checkmate condition working
 - [ ] Pawn promotion

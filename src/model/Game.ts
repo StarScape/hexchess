@@ -213,7 +213,7 @@ export class HexBoard {
 
     // But wHy No PoLyMoRpHiSm? It's chess. It doesn't *need* to be extensible. It's never going to change.
     switch (piece.type) {
-      case PieceType.Pawn:
+      case PieceType.Pawn: {
         const colorDir = piece.color === White ? -1 : 1
         const pawnMoves = this.getLine([q, r], [0, colorDir], piece.hasMoved ? 1 : 2)
 
@@ -226,26 +226,44 @@ export class HexBoard {
             addMoves(t)
           }
         }
-      break
-      case PieceType.Rook:
+        break
+      }
+      case PieceType.Rook: {
         addMoves(...HexBoard.neighborDirections.map(dir =>
           this.getLine([q, r], dir)
         ).flat())
-      break
-      case PieceType.Bishop:
+        break
+      }
+      case PieceType.Bishop: {
         addMoves(...HexBoard.diagonalDirections.map(dir =>
           this.getLine([q, r], dir)
         ).flat())
-      break
-      case PieceType.King:
+        break
+      }
+      case PieceType.Knight: {
+        console.log("TODO")
+        break
+      }
+      case PieceType.Queen: {
+        const queenMoves: Axial[] = [
+          ...HexBoard.diagonalDirections,
+          ...HexBoard.neighborDirections
+        ].map(dir => this.getLine([q, r], dir)).flat()
+        addMoves(...queenMoves)
+        break
+      }
+      case PieceType.King: {
         const kingMoves: Axial[] = [
           ...HexBoard.diagonalDirections,
           ...HexBoard.neighborDirections
         ].map(([dq, dr]) => [q + dq, r + dr])
         addMoves(...kingMoves)
-      break
-      default:
         break
+      }
+      default: {
+        console.error("Unexpected error, unrecognized piece type.")
+        break
+      }
     }
     return moves
   }
