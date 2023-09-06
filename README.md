@@ -3,7 +3,7 @@ TODO:
 - [x] Pawns set up and displaying
 - [x] Pawn movement
 - [x] Rook movement
-- [ ] Bishop movement
+- [x] Bishop movement
 - [ ] Knight movement
 - [ ] Queen movement
 - [ ] King movement

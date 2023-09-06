@@ -183,10 +183,10 @@ function main() {
     hexSizePx: 40,
   }
   const ui = new GameUI()
-  // const game = new ChessGame(HexBoard.singlePieceBoard(PieceType.Bishop))
+  const game = new ChessGame(HexBoard.singlePieceBoard(PieceType.King))
   // game.board.place(1, -2, new Piece(PieceType.Pawn, PlayerColor.Black))
   // game.board.place(1, -2, new Piece(PieceType.Pawn, PlayerColor.White))
-  const game = new ChessGame()
+  // const game = new ChessGame()
   drawBoard(game, ui, graphics)
 
   canvas.addEventListener('click', (e) => {

@@ -226,17 +226,24 @@ export class HexBoard {
             addMoves(t)
           }
         }
-        break
+      break
       case PieceType.Rook:
         addMoves(...HexBoard.neighborDirections.map(dir =>
           this.getLine([q, r], dir)
         ).flat())
-        break
+      break
       case PieceType.Bishop:
         addMoves(...HexBoard.diagonalDirections.map(dir =>
           this.getLine([q, r], dir)
         ).flat())
-        break
+      break
+      case PieceType.King:
+        const kingMoves: Axial[] = [
+          ...HexBoard.diagonalDirections,
+          ...HexBoard.neighborDirections
+        ].map(([dq, dr]) => [q + dq, r + dr])
+        addMoves(...kingMoves)
+      break
       default:
         break
     }
