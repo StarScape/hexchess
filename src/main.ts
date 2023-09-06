@@ -123,8 +123,25 @@ function clickedLocation(clientX: number, clientY: number, graphics: GraphicsInf
 }
 
 class GameUI {
-  selectedHex?: Hex
-  validMoves: Array<[number, number]> = []
+  game: ChessGame
+  validMoves: Axial[] = []
+
+  _selectedHex?: Hex
+  public get selectedHex() : Hex | undefined {
+    return this._selectedHex
+  }
+  public set selectedHex(sh: Hex | undefined) {
+    this._selectedHex = sh;
+    if (sh?.piece) {
+      this.validMoves = this.game.board.getValidMoves(sh.q, sh.r, sh.piece)
+    } else {
+      this.validMoves = []
+    }
+  }
+
+  constructor(game: ChessGame) {
+    this.game = game
+  }
 
   isValidMove(q: number, r: number): boolean {
     for (let i = 0; i < this.validMoves.length; i++) {
@@ -136,7 +153,8 @@ class GameUI {
     return false
   }
 
-  handleMovePiece(q: number, r: number, game: ChessGame) {
+  handleMovePiece(q: number, r: number) {
+    const {game} = this
     const hex = game.board.at(q, r)
     if (hex.piece && hex.piece.color === game.turn) {
       this.handleSelectPiece(q,r, game)
@@ -144,16 +162,19 @@ class GameUI {
       if (this.isValidMove(q, r)) {
         game.movePiece(this.selectedHex!.q, this.selectedHex!.r, q, r)
         this.selectedHex = undefined
-        this.validMoves = []
       }
     }
   }
 
-  handleSelectPiece(q: number, r: number, game: ChessGame) {
+  handleSelectPiece(q: number, r: number) {
+    const {game} = this
     const hex = game.board.at(q, r)
     if (hex.piece && hex.piece.color === game.turn) {
-      this.selectedHex = game.board.at(q, r)
-      this.validMoves = game.board.getValidMoves(q, r, hex.piece)
+      if (this.selectedHex === hex) {
+        this.selectedHex = undefined
+      } else {
+        this.selectedHex = game.board.at(q, r)
+      }
     } else {
       // play 'nope' sound
     }
@@ -182,20 +203,19 @@ function main() {
     canvasSizePx: canvasSize,
     hexSizePx: 40,
   }
-  const ui = new GameUI()
-  const game = new ChessGame(HexBoard.singlePieceBoard(PieceType.Queen))
-  // game.board.place(1, -2, new Piece(PieceType.Pawn, PlayerColor.Black))
-  // game.board.place(1, -2, new Piece(PieceType.Pawn, PlayerColor.White))
-  // const game = new ChessGame()
+  // const game = new ChessGame(HexBoard.singlePieceBoard(PieceType.Queen))
+  const game = new ChessGame()
+  const ui = new GameUI(game)
+
   drawBoard(game, ui, graphics)
 
   canvas.addEventListener('click', (e) => {
     const [q, r] = clickedLocation(e.clientX, e.clientY, graphics)
     if (HexBoard.isValidHex(q, r)) {
       if (ui.selectedHex) {
-        ui.handleMovePiece(q, r, game)
+        ui.handleMovePiece(q, r)
       } else {
-        ui.handleSelectPiece(q, r, game)
+        ui.handleSelectPiece(q, r)
       }
       drawBoard(game, ui, graphics)
       updateTurnImg(game)
