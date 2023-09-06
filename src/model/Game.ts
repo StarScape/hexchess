@@ -11,6 +11,10 @@ export enum PlayerColor {
   White = "White"
 }
 
+function oppositeColor(c: PlayerColor): PlayerColor {
+  return c === PlayerColor.Black ? PlayerColor.White : PlayerColor.Black
+}
+
 export enum PieceType {
   Pawn = "Pawn",
   Rook = "Rook",
@@ -182,6 +186,7 @@ export class HexBoard {
   }
 
   getValidMoves(q: number, r: number, piece: Piece): Array<Axial> {
+    const {Black, White} = PlayerColor
     const moves: Array<[number, number]> = []
     const addMoves = (...ms: Array<Axial>) => {
       for (const [toQ, toR] of ms) {
@@ -195,11 +200,18 @@ export class HexBoard {
     // It's never going to change.
     switch (piece.type) {
       case PieceType.Pawn:
-        const colorDir = piece.color === PlayerColor.White ? -1 : 1
+        const colorDir = piece.color === White ? -1 : 1
         // todo: prevent jumping
         const pawnMoves = this.getLine([q, r], [0, colorDir], piece.hasMoved ? 1 : 2)
-        addMoves(...pawnMoves)
-        // todo: diagonal taking
+        addMoves(...pawnMoves.filter(([mq, mr]) => !this.at(mq, mr).piece)) // no taking pieces from front
+
+        // front-left and front-right diagonal taking of enemy pieces
+        const takeable: Array<Axial> = [[q, r + colorDir], [q - colorDir, r + colorDir]]
+        for (const t of takeable) {
+          if (this.at(...t).piece?.color === oppositeColor(piece.color)) {
+            addMoves(t)
+          }
+        }
         break
       default:
         break
