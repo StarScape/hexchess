@@ -216,13 +216,11 @@ export class HexBoard {
       case PieceType.Pawn:
         const colorDir = piece.color === White ? -1 : 1
         const pawnMoves = this.getLine([q, r], [0, colorDir], piece.hasMoved ? 1 : 2)
-        // console.log(`pawnMoves: ${pawnMoves.length}`)
-        // console.log(`pawnMoves filtered: ${pawnMoves.filter(([mq, mr]) => !this.at(mq, mr).piece).length}`)
 
         addMoves(...pawnMoves.filter(([mq, mr]) => !this.at(mq, mr).piece)) // no taking pieces from front
 
-        // front-left and front-right diagonal taking of enemy pieces
-        const takeable: Array<Axial> = [[q, r + colorDir], [q - colorDir, r + colorDir]]
+        // Front-left and front-right diagonal taking of enemy pieces
+        const takeable: Array<Axial> = [[q + colorDir, r], [q - colorDir, r + colorDir]]
         for (const t of takeable) {
           if (this.at(...t).piece?.color === oppositeColor(piece.color)) {
             addMoves(t)
