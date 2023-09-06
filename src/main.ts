@@ -155,7 +155,7 @@ class GameUI {
       this.selectedHex = game.board.at(q, r)
       this.validMoves = game.board.getValidMoves(q, r, hex.piece)
     } else {
-      // play 'bonk' sound
+      // play 'nope' sound
     }
   }
 }
@@ -183,6 +183,7 @@ function main() {
     hexSizePx: 40,
   }
   const ui = new GameUI()
+  // const game = new ChessGame(HexBoard.singlePieceBoard(PieceType.Rook))
   const game = new ChessGame()
   drawBoard(game, ui, graphics)
 

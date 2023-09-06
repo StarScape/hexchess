@@ -1,3 +1,6 @@
+import { p } from '../utils'
+
+// See https://www.redblobgames.com/grids/hexagons/#coordinates-axial for explanation of axial coordinates
 type Axial = [q: number, r: number]
 
 export enum HexColor {
@@ -63,6 +66,7 @@ export class HexBoard {
    */
   static readonly BOARD_SIZE = 6
   private static readonly N = HexBoard.BOARD_SIZE - 1
+  private static readonly neighborDirections: Axial[] = [[0, -1], [1, -1], [1, 0], [0, 1], [-1, 1], [-1, 0]]
 
   /**
    * @returns Default starting board
@@ -119,11 +123,17 @@ export class HexBoard {
     return board
   }
 
+  static singlePieceBoard(pieceType: PieceType) {
+    const board = new HexBoard()
+    board.place(0, 0, new Piece(pieceType, PlayerColor.White))
+    return board
+  }
+
   static isValidHex(q: number, r: number): boolean {
     const N = HexBoard.N
     if (r >= 0 && r <= N) {
       return q >= -N && q <= N-r
-    } else if (r >= -N) {
+    } else if (r >= -N && r < 0) {
       return q <= N && q >= -(N+r)
     } else {
       return false
@@ -169,18 +179,19 @@ export class HexBoard {
     const hexes: Array<Axial> = []
     let currQ = q
     let currR = r
+    const piece = this.at(q, r).piece
+
     while (hexes.length < limit) {
-      const hexInLine: Axial = [currQ + dirQ, currR + dirR]
-      // don't add if there is piece of same color at hex in line
-      if (this.at(...hexInLine).piece?.color === this.at(q, r).piece?.color) {
+      const hex: Axial = [currQ + dirQ, currR + dirR]
+      // Don't add if there is piece of same color at hex in line
+      if (!HexBoard.isValidHex(...hex) || this.at(...hex).piece?.color === piece?.color) {
         break;
       }
-      hexes.push(hexInLine)
-      if (this.at(...hexInLine).piece) {
-        break;
+      hexes.push(hex)
+      if (this.at(...hex).piece) {
+        break
       }
-      currQ = hexInLine[0]
-      currR = hexInLine[1]
+      [currQ, currR] = hex
     }
     return hexes
   }
@@ -190,7 +201,7 @@ export class HexBoard {
     const moves: Array<[number, number]> = []
     const addMoves = (...ms: Array<Axial>) => {
       for (const [toQ, toR] of ms) {
-        if (HexBoard.isValidHex(toQ, toR  ) && this.at(toQ, toR).piece?.color !== piece.color) {
+        if (HexBoard.isValidHex(toQ, toR) && this.at(toQ, toR).piece?.color !== piece.color) {
           moves.push([toQ, toR])
         }
       }
@@ -213,6 +224,12 @@ export class HexBoard {
           }
         }
         break
+      case PieceType.Rook:
+        const moves = HexBoard.neighborDirections.map(dir => {
+          return this.getLine([q, r], dir)
+        }).flat()
+        addMoves(...moves)
+        break
       default:
         break
     }
@@ -231,7 +248,11 @@ export class HexBoard {
 
 export default class ChessGame {
   turn: PlayerColor = PlayerColor.White;
-  board: HexBoard = HexBoard.default()
+  board: HexBoard
+
+  constructor(board = HexBoard.default()) {
+    this.board = board
+  }
 
   /**
    * Moves piece on board and switches turn
