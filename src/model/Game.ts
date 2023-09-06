@@ -67,6 +67,7 @@ export class HexBoard {
   static readonly BOARD_SIZE = 6
   private static readonly N = HexBoard.BOARD_SIZE - 1
   private static readonly neighborDirections: Axial[] = [[0, -1], [1, -1], [1, 0], [0, 1], [-1, 1], [-1, 0]]
+  private static readonly diagonalDirections: Axial[] = [[-1, -1], [1, -2], [2, -1], [1, 1], [-1, 2], [-2, 1]]
 
   /**
    * @returns Default starting board
@@ -123,6 +124,9 @@ export class HexBoard {
     return board
   }
 
+  /**
+   * @returns Board with one white piece of chosen type in the middle hex. For testing purposes.
+   */
   static singlePieceBoard(pieceType: PieceType) {
     const board = new HexBoard()
     board.place(0, 0, new Piece(pieceType, PlayerColor.White))
@@ -207,13 +211,14 @@ export class HexBoard {
       }
     }
 
-    // But wHy No PoLyMoRpHiSm? It's chess. It doesn't *need* to be extensible.
-    // It's never going to change.
+    // But wHy No PoLyMoRpHiSm? It's chess. It doesn't *need* to be extensible. It's never going to change.
     switch (piece.type) {
       case PieceType.Pawn:
         const colorDir = piece.color === White ? -1 : 1
-        // todo: prevent jumping
         const pawnMoves = this.getLine([q, r], [0, colorDir], piece.hasMoved ? 1 : 2)
+        // console.log(`pawnMoves: ${pawnMoves.length}`)
+        // console.log(`pawnMoves filtered: ${pawnMoves.filter(([mq, mr]) => !this.at(mq, mr).piece).length}`)
+
         addMoves(...pawnMoves.filter(([mq, mr]) => !this.at(mq, mr).piece)) // no taking pieces from front
 
         // front-left and front-right diagonal taking of enemy pieces
@@ -225,10 +230,14 @@ export class HexBoard {
         }
         break
       case PieceType.Rook:
-        const moves = HexBoard.neighborDirections.map(dir => {
-          return this.getLine([q, r], dir)
-        }).flat()
-        addMoves(...moves)
+        addMoves(...HexBoard.neighborDirections.map(dir =>
+          this.getLine([q, r], dir)
+        ).flat())
+        break
+      case PieceType.Bishop:
+        addMoves(...HexBoard.diagonalDirections.map(dir =>
+          this.getLine([q, r], dir)
+        ).flat())
         break
       default:
         break
