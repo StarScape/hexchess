@@ -203,7 +203,7 @@ function main() {
     canvasSizePx: canvasSize,
     hexSizePx: 40,
   }
-  // const game = new ChessGame(HexBoard.singlePieceBoard(PieceType.Queen))
+  // const game = new ChessGame(HexBoard.singlePieceBoard(PieceType.Knight))
   const game = new ChessGame()
   const ui = new GameUI(game)
 

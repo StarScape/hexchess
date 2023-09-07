@@ -4,12 +4,12 @@ TODO:
 - [x] Pawn movement
 - [x] Rook movement
 - [x] Bishop movement
-- [ ] Knight movement
-- [ ] Queen movement
+- [x] Knight movement
+- [x] Queen movement
 - [x] King movement
-- [ ] Network between two clients
 - [ ] Get checkmate condition working
 - [ ] Pawn promotion
+- [ ] Network between two clients
 - [ ] En passant
 - [ ] Castleing?
 - [ ] Animations
