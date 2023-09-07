@@ -8,8 +8,8 @@ TODO:
 - [x] Queen movement
 - [x] King movement
 - [ ] Get checkmate condition working
+- [ ] Prevent moving into check
 - [ ] Pawn promotion
 - [ ] Network between two clients
 - [ ] En passant
-- [ ] Castleing?
 - [ ] Animations

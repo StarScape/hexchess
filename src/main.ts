@@ -27,7 +27,7 @@ const images: Images = {
   }
 }
 
-function axialToPixel(q: number, r: number, hexSize: number, canvasSizePx: number) {
+function axialToPixel([q, r]: Axial, hexSize: number, canvasSizePx: number) {
   const offset = canvasSizePx / 2
   const x = hexSize * (1.5 * q)
   const y = hexSize * (Math.sqrt(3)/2 * q + Math.sqrt(3) * r)
@@ -97,12 +97,13 @@ function drawPiece(px: number, py: number, piece: Piece, graphics: GraphicsInfo)
 
 function drawBoard(game: ChessGame, ui: GameUI, graphics: GraphicsInfo) {
   const {ctx, hexSizePx, canvasSizePx} = graphics
-  game.board.forEach((hex) => {
-    const [px, py] = axialToPixel(hex.q, hex.r, hexSizePx, canvasSizePx)
+  game.board.forEach((hexCoords) => {
+    const [px, py] = axialToPixel(hexCoords, hexSizePx, canvasSizePx)
+    const hex = game.board.at(hexCoords)
     let color
-    if (ui.selectedHex === hex) {
+    if (ui.selected === hexCoords) {
       color = "lightblue"
-    } else if (ui.isValidMove(hex.q, hex.r)) {
+    } else if (ui.isValidMove(hexCoords)) {
       color = "yellow"
     } else {
       color = hex.color
@@ -126,14 +127,14 @@ class GameUI {
   game: ChessGame
   validMoves: Axial[] = []
 
-  _selectedHex?: Hex
-  public get selectedHex() : Hex | undefined {
+  _selectedHex?: Axial
+  public get selected() : Axial {
     return this._selectedHex
   }
-  public set selectedHex(sh: Hex | undefined) {
+  public set selected(sh: Axial) {
     this._selectedHex = sh;
-    if (sh?.piece) {
-      this.validMoves = this.game.board.getValidMoves(sh.q, sh.r, sh.piece)
+    if (sh) {
+      this.validMoves = this.game.board.getValidMoves(sh)
     } else {
       this.validMoves = []
     }
@@ -143,7 +144,8 @@ class GameUI {
     this.game = game
   }
 
-  isValidMove(q: number, r: number): boolean {
+  isValidMove(to: Axial): boolean {
+    const [q, r] = to
     for (let i = 0; i < this.validMoves.length; i++) {
       const [vq, vr] = this.validMoves[i];
       if (vq === q && vr === r) {
@@ -153,27 +155,27 @@ class GameUI {
     return false
   }
 
-  handleMovePiece(q: number, r: number) {
+  handleMovePiece(clicked: Axial) {
     const {game} = this
-    const hex = game.board.at(q, r)
+    const hex = game.board.at(clicked)
     if (hex.piece && hex.piece.color === game.turn) {
-      this.handleSelectPiece(q,r, game)
+      this.handleSelectPiece(clicked)
     } else {
-      if (this.isValidMove(q, r)) {
-        game.movePiece(this.selectedHex!.q, this.selectedHex!.r, q, r)
-        this.selectedHex = undefined
+      if (this.isValidMove(clicked)) {
+        game.movePiece(this.selected, clicked)
+        this.selected = undefined
       }
     }
   }
 
-  handleSelectPiece(q: number, r: number) {
+  handleSelectPiece(clicked: Axial) {
     const {game} = this
-    const hex = game.board.at(q, r)
+    const hex = game.board.at(clicked)
     if (hex.piece && hex.piece.color === game.turn) {
-      if (this.selectedHex === hex) {
-        this.selectedHex = undefined
+      if (this.selected === hex) {
+        this.selected = undefined
       } else {
-        this.selectedHex = game.board.at(q, r)
+        this.selected = clicked
       }
     } else {
       // play 'nope' sound
@@ -210,12 +212,12 @@ function main() {
   drawBoard(game, ui, graphics)
 
   canvas.addEventListener('click', (e) => {
-    const [q, r] = clickedLocation(e.clientX, e.clientY, graphics)
-    if (HexBoard.isValidHex(q, r)) {
-      if (ui.selectedHex) {
-        ui.handleMovePiece(q, r)
+    const clicked = clickedLocation(e.clientX, e.clientY, graphics)
+    if (HexBoard.isValidHex(clicked)) {
+      if (ui.selected) {
+        ui.handleMovePiece(clicked)
       } else {
-        ui.handleSelectPiece(q, r)
+        ui.handleSelectPiece(clicked)
       }
       drawBoard(game, ui, graphics)
       updateTurnImg(game)

@@ -39,15 +39,16 @@ export class Piece {
 }
 
 export class Hex {
-  q: number
-  r: number
+  coords: Axial
   piece?: Piece
 
-  constructor(q: number, r: number, piece?: Piece) {
-    this.q = q
-    this.r = r
+  constructor(coords: Axial, piece?: Piece) {
+    this.coords = coords
     this.piece = piece
   }
+
+  get q(): number { return this.coords[0] }
+  get r(): number { return this.coords[1] }
 
   get color(): HexColor {
     if ((this.q - this.r - 1) % 3 === 0) {
@@ -133,7 +134,7 @@ export class HexBoard {
     return board
   }
 
-  static isValidHex(q: number, r: number): boolean {
+  static isValidHex([q, r]: Axial): boolean {
     const N = HexBoard.N
     if (r >= 0 && r <= N) {
       return q >= -N && q <= N-r
@@ -151,7 +152,7 @@ export class HexBoard {
     for (let r = -5; r <= 5; r++) {
       const qArr: Array<Hex> = [];
       for (let q = Math.max(-HexBoard.N, -r-HexBoard.N); q <= Math.min(HexBoard.N, -r+HexBoard.N); q++) {
-        qArr.push(new Hex(q, r))
+        qArr.push(new Hex([q, r]))
       }
       this.hexes.push(qArr);
     }
@@ -161,7 +162,7 @@ export class HexBoard {
     return [r + HexBoard.N, Math.min(HexBoard.N+r, HexBoard.N) + q]
   }
 
-  at(q: number, r: number): Hex {
+  at([q, r]: Axial): Hex {
     const [ri, qi] = this.idxs(q, r)
     return this.hexes[ri][qi]
   }
@@ -171,28 +172,32 @@ export class HexBoard {
     this.hexes[ri][qi].piece = piece
   }
 
-  forEach(f: (hex: Hex) => void): void {
+  /**
+   * Iterates through every valid hex on the board and passes its axial coordinates to a callback.
+   */
+  forEach(f: (hexLocation: Axial) => void): void {
     for (let q = -HexBoard.N; q <= HexBoard.N; q++) {
       for (let r = Math.max(-HexBoard.N, -q-HexBoard.N); r <= Math.min(HexBoard.N, -q+HexBoard.N); r++) {
-        f(this.at(q, r))
+        f([q, r])
       }
     }
   }
 
-  getLine([q, r]: Axial, [dirQ, dirR]: Axial, limit: number = Number.POSITIVE_INFINITY): Array<Axial> {
+  getLine(start: Axial, [dirQ, dirR]: Axial, limit: number = Number.POSITIVE_INFINITY): Array<Axial> {
     const hexes: Array<Axial> = []
+    const [q, r] = start
     let currQ = q
     let currR = r
-    const piece = this.at(q, r).piece
+    const piece = this.at(start).piece
 
     while (hexes.length < limit) {
       const hex: Axial = [currQ + dirQ, currR + dirR]
       // Don't add if there is piece of same color at hex in line
-      if (!HexBoard.isValidHex(...hex) || this.at(...hex).piece?.color === piece?.color) {
+      if (!HexBoard.isValidHex(hex) || this.at(hex).piece?.color === piece?.color) {
         break;
       }
       hexes.push(hex)
-      if (this.at(...hex).piece) {
+      if (this.at(hex).piece) {
         break
       }
       [currQ, currR] = hex
@@ -200,13 +205,17 @@ export class HexBoard {
     return hexes
   }
 
-  getValidMoves(q: number, r: number, piece: Piece): Array<Axial> {
-    const {Black, White} = PlayerColor
-    const moves: Array<[number, number]> = []
+  getValidMoves(start: Axial): Array<Axial> {
+    console.log(start)
+    const [q, r] = start
+    const piece = this.at(start).piece
+    if (piece === null || piece === undefined) { return [] }
+
+    const moves: Axial[] = []
     const addMoves = (...ms: Array<Axial>) => {
-      for (const [toQ, toR] of ms) {
-        if (HexBoard.isValidHex(toQ, toR) && this.at(toQ, toR).piece?.color !== piece.color) {
-          moves.push([toQ, toR])
+      for (const m of ms) {
+        if (HexBoard.isValidHex(m) && this.at(m).piece?.color !== piece.color) {
+          moves.push(m)
         }
       }
     }
@@ -214,34 +223,34 @@ export class HexBoard {
     // But wHy No PoLyMoRpHiSm? It's chess. It doesn't *need* to be extensible. It's never going to change.
     switch (piece.type) {
       case PieceType.Pawn: {
-        const colorDir = piece.color === White ? -1 : 1
-        const pawnMoves = this.getLine([q, r], [0, colorDir], piece.hasMoved ? 1 : 2)
+        const colorDir = piece.color === PlayerColor.White ? -1 : 1
+        const pawnMoves = this.getLine(start, [0, colorDir], piece.hasMoved ? 1 : 2)
 
-        addMoves(...pawnMoves.filter(([mq, mr]) => !this.at(mq, mr).piece)) // no taking pieces from front
+        // No taking pieces from front
+        addMoves(...pawnMoves.filter(m => !this.at(m).piece))
 
         // Front-left and front-right diagonal taking of enemy pieces
-        const takeable: Array<Axial> = [[q + colorDir, r], [q - colorDir, r + colorDir]]
-        for (const t of takeable) {
-          if (this.at(...t).piece?.color === oppositeColor(piece.color)) {
-            addMoves(t)
+        const capturableHexes: Array<Axial> = [[q + colorDir, r], [q - colorDir, r + colorDir]]
+        for (const capturable of capturableHexes) {
+          if (this.at(capturable).piece?.color === oppositeColor(piece.color)) {
+            addMoves(capturable)
           }
         }
         break
       }
       case PieceType.Rook: {
         addMoves(...HexBoard.neighborDirections.map(dir =>
-          this.getLine([q, r], dir)
+          this.getLine(start, dir)
         ).flat())
         break
       }
       case PieceType.Bishop: {
         addMoves(...HexBoard.diagonalDirections.map(dir =>
-          this.getLine([q, r], dir)
+          this.getLine(start, dir)
         ).flat())
         break
       }
       case PieceType.Knight: {
-        console.log("TODO")
         const knightDirections = [
           [-1, -2], [1, -3],
           [2, -3], [3, -2],
@@ -258,7 +267,7 @@ export class HexBoard {
         const queenMoves: Axial[] = [
           ...HexBoard.diagonalDirections,
           ...HexBoard.neighborDirections
-        ].map(dir => this.getLine([q, r], dir)).flat()
+        ].map(dir => this.getLine(start, dir)).flat()
         addMoves(...queenMoves)
         break
       }
@@ -278,7 +287,7 @@ export class HexBoard {
     return moves
   }
 
-  movePiece(q1: number, r1: number, q2: number, r2: number) {
+  movePiece([q1, r1]: Axial, [q2, r2]: Axial) {
     const [r1i, q1i] = this.idxs(q1, r1)
     const [r2i, q2i] = this.idxs(q2, r2)
     const pieceToMove = this.hexes[r1i][q1i].piece!
@@ -299,8 +308,8 @@ export default class ChessGame {
   /**
    * Moves piece on board and switches turn
    */
-  movePiece(q1: number, r1: number, q2: number, r2: number) {
-    this.board.movePiece(q1, r1, q2, r2)
-    this.turn = this.turn === PlayerColor.White ? PlayerColor.Black : PlayerColor.White
+  movePiece(start: Axial, end: Axial) {
+    this.board.movePiece(start, end)
+    this.turn = oppositeColor(this.turn)
   }
 }
