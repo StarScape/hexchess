@@ -32,13 +32,16 @@
     <img id="img-king-black" src="/img/chess_pieces/king_black.svg">
   </div>
 
-  <div style="display: flex; align-items: center;">
+  <div style="display: flex; align-items: center; justify-content: center;">
     <span>Turn: </span>
     <span>
       <img id="current-turn-img" width="35px" src="/img/chess_pieces/pawn_white.svg">
     </span>
   </div>
+
+  <div id="captured-by-black" style="height: 35px"></div>
   <canvas id='canvas'></canvas>
+  <div id="captured-by-white"></div>
 
   <script type="module" src="/src/main.ts"></script>
 

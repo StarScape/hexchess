@@ -307,12 +307,13 @@ export default class ChessGame {
   /**
    * Moves piece on board and switches turn
    */
-  movePiece(start: Axial, end: Axial) {
+  movePiece(start: Axial, end: Axial): Piece | undefined {
     const capturedPiece = this.board.movePiece(start, end)
     if (capturedPiece) {
       this.pieces[capturedPiece.color].delete(capturedPiece)
     }
     this.switchTurn()
+    return capturedPiece
   }
 
   switchTurn() {

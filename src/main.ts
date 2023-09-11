@@ -149,8 +149,9 @@ class GameUI {
       this.handleSelectPiece(clicked)
     } else {
       if (this.selectedHex && game.isValidMove(this.selectedHex, clicked)) {
-        game.movePiece(this.selectedHex, clicked)
+        const captured = game.movePiece(this.selectedHex, clicked)
         this.selectedHex = undefined
+        if (captured) this.addToCapturedRow(captured)
       }
     }
   }
@@ -166,6 +167,15 @@ class GameUI {
       }
     } else {
       // play 'nope' sound
+    }
+  }
+
+  addToCapturedRow(piece: Piece) {
+    const row = document.querySelector(`#captured-by-${piece.color === PlayerColor.Black ? 'white' : 'black'}`)
+    console.log(row)
+    if (row) {
+      const {src} = images[piece.color][piece.type] as HTMLImageElement
+      row.innerHTML = row.innerHTML + `<span><img width="35px" src="${src}"></span>`
     }
   }
 }
