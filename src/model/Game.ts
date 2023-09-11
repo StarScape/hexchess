@@ -44,29 +44,6 @@ export class Piece {
   }
 }
 
-export class Hex {
-  coords: Axial
-  piece?: Piece
-
-  constructor(coords: Axial, piece?: Piece) {
-    this.coords = coords
-    this.piece = piece
-  }
-
-  get q(): number { return this.coords[0] }
-  get r(): number { return this.coords[1] }
-
-  get color(): HexColor {
-    if ((this.q - this.r - 1) % 3 === 0) {
-      return HexColor.White
-    } else if ((this.q - this.r - 2) % 3 === 0) {
-      return HexColor.Black
-    } else {
-      return HexColor.Grey
-    }
-  }
-}
-
 export class HexBoard {
   /**
    * The length (in hexagons) of one side of the board
@@ -96,16 +73,16 @@ export class HexBoard {
     }
   }
 
-  private hexes: Array<Array<Hex>>
+  private hexes: Array<Array<Piece | undefined>>
 
   constructor() {
     this.hexes = []
     for (let r = -5; r <= 5; r++) {
-      const qArr: Array<Hex> = [];
+      const qArr: Array<Piece | undefined> = [];
       for (let q = Math.max(-HexBoard.N, -r-HexBoard.N); q <= Math.min(HexBoard.N, -r+HexBoard.N); q++) {
-        qArr.push(new Hex([q, r]))
+        qArr.push(undefined)
       }
-      this.hexes.push(qArr);
+      this.hexes.push(qArr)
     }
   }
 
@@ -113,14 +90,14 @@ export class HexBoard {
     return [r + HexBoard.N, Math.min(HexBoard.N+r, HexBoard.N) + q]
   }
 
-  at(location: Axial): Hex {
+  at(location: Axial): Piece | undefined {
     const [ri, qi] = this.idxs(location)
     return this.hexes[ri][qi]
   }
 
   place(location: Axial, piece: Piece) {
     const [ri, qi] = this.idxs(location)
-    this.hexes[ri][qi].piece = piece
+    this.hexes[ri][qi] = piece
     piece.hex = location
   }
 
@@ -140,32 +117,31 @@ export class HexBoard {
     const [q, r] = start
     let currQ = q
     let currR = r
-    const piece = this.at(start).piece
+    const piece = this.at(start)
 
     while (hexes.length < limit) {
       const hex: Axial = [currQ + dirQ, currR + dirR]
       // Don't add if there is piece of same color at hex in line
-      if (!HexBoard.isValidHex(hex) || this.at(hex).piece?.color === piece?.color) {
-        break;
+      if (!HexBoard.isValidHex(hex) || this.at(hex)?.color === piece?.color) {
+        break // found piece of same color or past edge of board, don't add to line
       }
       hexes.push(hex)
-      if (this.at(hex).piece) {
-        break
+      if (this.at(hex)) {
+        break // found piece of different color, add but go no further
       }
       [currQ, currR] = hex
     }
     return hexes
   }
-
   getValidMoves(start: Axial): Array<Axial> {
     const [q, r] = start
-    const piece = this.at(start).piece
+    const piece = this.at(start)
     if (piece === null || piece === undefined) { return [] }
 
     const moves: Axial[] = []
     const addMoves = (...ms: Array<Axial>) => {
       for (const m of ms) {
-        if (HexBoard.isValidHex(m) && this.at(m).piece?.color !== piece.color) {
+        if (HexBoard.isValidHex(m) && this.at(m)?.color !== piece.color) {
           moves.push(m)
         }
       }
@@ -178,12 +154,12 @@ export class HexBoard {
         const pawnMoves = this.getLine(start, [0, colorDir], piece.hasMoved ? 1 : 2)
 
         // No taking pieces from front
-        addMoves(...pawnMoves.filter(m => !this.at(m).piece))
+        addMoves(...pawnMoves.filter(m => !this.at(m)))
 
         // Front-left and front-right diagonal taking of enemy pieces
         const capturableHexes: Array<Axial> = [[q + colorDir, r], [q - colorDir, r + colorDir]]
         for (const capturable of capturableHexes) {
-          if (this.at(capturable).piece?.color === oppositeColor(piece.color)) {
+          if (this.at(capturable)?.color === oppositeColor(piece.color)) {
             addMoves(capturable)
           }
         }
@@ -245,12 +221,13 @@ export class HexBoard {
   movePiece(from: Axial, to: Axial): Piece | undefined {
     const [r1i, q1i] = this.idxs(from)
     const [r2i, q2i] = this.idxs(to)
-    const pieceToMove = this.hexes[r1i][q1i].piece!
-    const pieceInNewHex = this.hexes[r2i][q2i].piece
-    this.hexes[r2i][q2i].piece = pieceToMove
-    this.hexes[r1i][q1i].piece = undefined
-    pieceToMove.hasMoved = true
-    pieceToMove.hex = to
+    const pieceToMove = this.hexes[r1i][q1i]
+    // assert(pieceToMove)
+    const pieceInNewHex = this.hexes[r2i][q2i]
+    this.hexes[r2i][q2i] = pieceToMove
+    this.hexes[r1i][q1i] = undefined
+    pieceToMove!.hasMoved = true
+    pieceToMove!.hex = to
 
     return pieceInNewHex
   }
@@ -352,6 +329,6 @@ export default class ChessGame {
   }
 
   isValidMove(from: Axial, [toQ, toR]: Axial): boolean {
-    return this.board.at(from).piece?.validMoves.some(([q, r]) => q === toQ && r == toR) ?? false
+    return this.board.at(from)?.validMoves.some(([q, r]) => q === toQ && r == toR) ?? false
   }
 }

@@ -1,4 +1,4 @@
-import ChessGame, { HexBoard, Hex, Piece, PieceType, PlayerColor, Axial, axialEquals } from './model/Game.ts'
+import ChessGame, { HexBoard, Hex, Piece, PieceType, PlayerColor, Axial, axialEquals, HexColor } from './model/Game.ts'
 
 interface GraphicsInfo {
   canvas: HTMLCanvasElement
@@ -88,6 +88,17 @@ function drawHex(ctx: CanvasRenderingContext2D, px: number, py: number, r: numbe
   ctx.stroke()
 }
 
+function hexColor([q, r]: Axial): HexColor {
+  // assert HexBoard.isValidHex([q, r])
+  if ((q - r - 1) % 3 === 0) {
+    return HexColor.White
+  } else if ((q - r - 2) % 3 === 0) {
+    return HexColor.Black
+  } else {
+    return HexColor.Grey
+  }
+}
+
 function drawPiece(px: number, py: number, piece: Piece, graphics: GraphicsInfo) {
   const {ctx} = graphics
   const imgSize = graphics.hexSizePx
@@ -97,20 +108,20 @@ function drawPiece(px: number, py: number, piece: Piece, graphics: GraphicsInfo)
 
 function drawBoard(game: ChessGame, ui: GameUI, graphics: GraphicsInfo) {
   const {ctx, hexSizePx, canvasSizePx} = graphics
-  game.board.forEach((hexCoords) => {
-    const [px, py] = axialToPixel(hexCoords, hexSizePx, canvasSizePx)
-    const hex = game.board.at(hexCoords)
+  game.board.forEach((hex) => {
+    const [px, py] = axialToPixel(hex, hexSizePx, canvasSizePx)
+    const piece = game.board.at(hex)
     let color
-    if (axialEquals(ui.selectedHex, hexCoords)) {
+    if (axialEquals(ui.selectedHex, hex)) {
       color = "lightblue"
-    } else if (ui.selectedHex && game.isValidMove(ui.selectedHex, hexCoords)) {
+    } else if (ui.selectedHex && game.isValidMove(ui.selectedHex, hex)) {
       color = "yellow"
     } else {
-      color = hex.color
+      color = hexColor(hex)
     }
     drawHex(ctx, px, py, hexSizePx, color)
-    if (hex.piece) {
-      drawPiece(px, py, hex.piece, graphics)
+    if (piece) {
+      drawPiece(px, py, piece, graphics)
     }
   })
 }
@@ -133,8 +144,8 @@ class GameUI {
 
   handleMovePiece(clicked: Axial) {
     const {game} = this
-    const hex = game.board.at(clicked)
-    if (hex.piece && hex.piece.color === game.playerTurn) {
+    const clickedPiece = game.board.at(clicked)
+    if (clickedPiece && clickedPiece.color === game.playerTurn) {
       this.handleSelectPiece(clicked)
     } else {
       if (this.selectedHex && game.isValidMove(this.selectedHex, clicked)) {
@@ -146,8 +157,8 @@ class GameUI {
 
   handleSelectPiece(clicked: Axial) {
     const {game} = this
-    const hex = game.board.at(clicked)
-    if (hex.piece && hex.piece.color === game.playerTurn) {
+    const clickedPiece = game.board.at(clicked)
+    if (clickedPiece && clickedPiece.color === game.playerTurn) {
       if (axialEquals(this.selectedHex, clicked)) {
         this.selectedHex = undefined
       } else {
