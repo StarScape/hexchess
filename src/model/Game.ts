@@ -1,7 +1,11 @@
 import { p } from '../utils'
 
 // See https://www.redblobgames.com/grids/hexagons/#coordinates-axial for explanation of axial coordinates
-type Axial = [q: number, r: number]
+export type Axial = [q: number, r: number]
+
+export function axialEquals(a1?: Axial, a2?: Axial): boolean {
+  return !a1 || !a2 ? false : a1[0] === a2[0] && a1[1] === a2[1]
+}
 
 export enum HexColor {
   Black = "black",
@@ -31,6 +35,8 @@ export class Piece {
   type: PieceType
   color: PlayerColor
   hasMoved: boolean = false
+  validMoves: Axial[] = []
+  hex: Axial = [0, 0]
 
   constructor(type: PieceType, color: PlayerColor) {
     this.type = type
@@ -70,69 +76,14 @@ export class HexBoard {
   private static readonly neighborDirections: Axial[] = [[0, -1], [1, -1], [1, 0], [0, 1], [-1, 1], [-1, 0]]
   private static readonly diagonalDirections: Axial[] = [[-1, -1], [1, -2], [2, -1], [1, 1], [-1, 2], [-2, 1]]
 
-  /**
-   * @returns Default starting board
-   */
-  static default(): HexBoard {
-    const board = new HexBoard()
-
-    board.place(-4, 5, new Piece(PieceType.Pawn, PlayerColor.White))
-    board.place(-3, 4, new Piece(PieceType.Pawn, PlayerColor.White))
-    board.place(-2, 3, new Piece(PieceType.Pawn, PlayerColor.White))
-    board.place(-1, 2, new Piece(PieceType.Pawn, PlayerColor.White))
-    board.place(0, 1, new Piece(PieceType.Pawn, PlayerColor.White))
-    board.place(1, 1, new Piece(PieceType.Pawn, PlayerColor.White))
-    board.place(2, 1, new Piece(PieceType.Pawn, PlayerColor.White))
-    board.place(3, 1, new Piece(PieceType.Pawn, PlayerColor.White))
-    board.place(4, 1, new Piece(PieceType.Pawn, PlayerColor.White))
-
-    board.place(-3, 5, new Piece(PieceType.Rook, PlayerColor.White))
-    board.place(3, 2, new Piece(PieceType.Rook, PlayerColor.White))
-
-    board.place(-2, 5, new Piece(PieceType.Knight, PlayerColor.White))
-    board.place(2, 3, new Piece(PieceType.Knight, PlayerColor.White))
-
-    board.place(0, 3, new Piece(PieceType.Bishop, PlayerColor.White))
-    board.place(0, 4, new Piece(PieceType.Bishop, PlayerColor.White))
-    board.place(0, 5, new Piece(PieceType.Bishop, PlayerColor.White))
-
-    board.place(1, 4, new Piece(PieceType.King, PlayerColor.White))
-    board.place(-1, 5, new Piece(PieceType.Queen, PlayerColor.White))
-
-    board.place(-4, -1, new Piece(PieceType.Pawn, PlayerColor.Black))
-    board.place(-3, -1, new Piece(PieceType.Pawn, PlayerColor.Black))
-    board.place(-2, -1, new Piece(PieceType.Pawn, PlayerColor.Black))
-    board.place(-1, -1, new Piece(PieceType.Pawn, PlayerColor.Black))
-    board.place(0, -1, new Piece(PieceType.Pawn, PlayerColor.Black))
-    board.place(1, -2, new Piece(PieceType.Pawn, PlayerColor.Black))
-    board.place(2, -3, new Piece(PieceType.Pawn, PlayerColor.Black))
-    board.place(3, -4, new Piece(PieceType.Pawn, PlayerColor.Black))
-    board.place(4, -5, new Piece(PieceType.Pawn, PlayerColor.Black))
-
-    board.place(-3, -2, new Piece(PieceType.Rook, PlayerColor.Black))
-    board.place(3, -5, new Piece(PieceType.Rook, PlayerColor.Black))
-
-    board.place(-2, -3, new Piece(PieceType.Knight, PlayerColor.Black))
-    board.place(2, -5, new Piece(PieceType.Knight, PlayerColor.Black))
-
-    board.place(0, -3, new Piece(PieceType.Bishop, PlayerColor.Black))
-    board.place(0, -4, new Piece(PieceType.Bishop, PlayerColor.Black))
-    board.place(0, -5, new Piece(PieceType.Bishop, PlayerColor.Black))
-
-    board.place(1, -5, new Piece(PieceType.King, PlayerColor.Black))
-    board.place(-1, -4, new Piece(PieceType.Queen, PlayerColor.Black))
-
-    return board
-  }
-
-  /**
-   * @returns Board with one white piece of chosen type in the middle hex. For testing purposes.
-   */
-  static singlePieceBoard(pieceType: PieceType) {
-    const board = new HexBoard()
-    board.place(0, 0, new Piece(pieceType, PlayerColor.White))
-    return board
-  }
+  // /**
+  //  * @returns Board with one white piece of chosen type in the middle hex. For testing purposes.
+  //  */
+  // static singlePieceBoard(pieceType: PieceType) {
+  //   const board = new HexBoard()
+  //   board.place(0, 0, new Piece(pieceType, PlayerColor.White))
+  //   return board
+  // }
 
   static isValidHex([q, r]: Axial): boolean {
     const N = HexBoard.N
@@ -158,18 +109,19 @@ export class HexBoard {
     }
   }
 
-  private idxs(q: number, r: number): [ri: number, qi: number] {
+  private idxs([q, r]: Axial): [ri: number, qi: number] {
     return [r + HexBoard.N, Math.min(HexBoard.N+r, HexBoard.N) + q]
   }
 
-  at([q, r]: Axial): Hex {
-    const [ri, qi] = this.idxs(q, r)
+  at(location: Axial): Hex {
+    const [ri, qi] = this.idxs(location)
     return this.hexes[ri][qi]
   }
 
-  place(q: number, r: number, piece: Piece) {
-    const [ri, qi] = this.idxs(q, r)
+  place(location: Axial, piece: Piece) {
+    const [ri, qi] = this.idxs(location)
     this.hexes[ri][qi].piece = piece
+    piece.hex = location
   }
 
   /**
@@ -206,7 +158,6 @@ export class HexBoard {
   }
 
   getValidMoves(start: Axial): Array<Axial> {
-    console.log(start)
     const [q, r] = start
     const piece = this.at(start).piece
     if (piece === null || piece === undefined) { return [] }
@@ -287,29 +238,120 @@ export class HexBoard {
     return moves
   }
 
-  movePiece([q1, r1]: Axial, [q2, r2]: Axial) {
-    const [r1i, q1i] = this.idxs(q1, r1)
-    const [r2i, q2i] = this.idxs(q2, r2)
+  /**
+   * Moves a piece on the board from first hex to second hex.
+   * @return `Piece` captured if movement captures a piece
+   */
+  movePiece(from: Axial, to: Axial): Piece | undefined {
+    const [r1i, q1i] = this.idxs(from)
+    const [r2i, q2i] = this.idxs(to)
     const pieceToMove = this.hexes[r1i][q1i].piece!
+    const pieceInNewHex = this.hexes[r2i][q2i].piece
     this.hexes[r2i][q2i].piece = pieceToMove
     this.hexes[r1i][q1i].piece = undefined
     pieceToMove.hasMoved = true
+    pieceToMove.hex = to
+
+    return pieceInNewHex
   }
 }
 
 export default class ChessGame {
-  turn: PlayerColor = PlayerColor.White;
   board: HexBoard
+  playerTurn: PlayerColor = PlayerColor.White
+  // pieces: Record<PlayerColor, Map<AxialAsJSON, Piece>> = {
+  //   [PlayerColor.Black]: new Map(),
+  //   [PlayerColor.White]: new Map()
+  // }
+  pieces: Record<PlayerColor, Set<Piece>> = {
+    [PlayerColor.Black]: new Set(),
+    [PlayerColor.White]: new Set()
+  }
 
-  constructor(board = HexBoard.default()) {
-    this.board = board
+  playerInCheck: PlayerColor | null = null
+  checkmate: boolean = false
+
+  /**
+   * @returns Default starting board
+   */
+  static defaultBoard() {
+    const game = new ChessGame()
+
+    game.place([-4, 5], new Piece(PieceType.Pawn, PlayerColor.White))
+    game.place([-3, 4], new Piece(PieceType.Pawn, PlayerColor.White))
+    game.place([-2, 3], new Piece(PieceType.Pawn, PlayerColor.White))
+    game.place([-1, 2], new Piece(PieceType.Pawn, PlayerColor.White))
+    game.place([0, 1], new Piece(PieceType.Pawn, PlayerColor.White))
+    game.place([1, 1], new Piece(PieceType.Pawn, PlayerColor.White))
+    game.place([2, 1], new Piece(PieceType.Pawn, PlayerColor.White))
+    game.place([3, 1], new Piece(PieceType.Pawn, PlayerColor.White))
+    game.place([4, 1], new Piece(PieceType.Pawn, PlayerColor.White))
+    game.place([-3, 5], new Piece(PieceType.Rook, PlayerColor.White))
+    game.place([3, 2], new Piece(PieceType.Rook, PlayerColor.White))
+    game.place([-2, 5], new Piece(PieceType.Knight, PlayerColor.White))
+    game.place([2, 3], new Piece(PieceType.Knight, PlayerColor.White))
+    game.place([0, 3], new Piece(PieceType.Bishop, PlayerColor.White))
+    game.place([0, 4], new Piece(PieceType.Bishop, PlayerColor.White))
+    game.place([0, 5], new Piece(PieceType.Bishop, PlayerColor.White))
+    game.place([1, 4], new Piece(PieceType.King, PlayerColor.White))
+    game.place([-1, 5], new Piece(PieceType.Queen, PlayerColor.White))
+    game.place([-4, -1], new Piece(PieceType.Pawn, PlayerColor.Black))
+    game.place([-3, -1], new Piece(PieceType.Pawn, PlayerColor.Black))
+    game.place([-2, -1], new Piece(PieceType.Pawn, PlayerColor.Black))
+    game.place([-1, -1], new Piece(PieceType.Pawn, PlayerColor.Black))
+    game.place([0, -1], new Piece(PieceType.Pawn, PlayerColor.Black))
+    game.place([1, -2], new Piece(PieceType.Pawn, PlayerColor.Black))
+    game.place([2, -3], new Piece(PieceType.Pawn, PlayerColor.Black))
+    game.place([3, -4], new Piece(PieceType.Pawn, PlayerColor.Black))
+    game.place([4, -5], new Piece(PieceType.Pawn, PlayerColor.Black))
+    game.place([-3, -2], new Piece(PieceType.Rook, PlayerColor.Black))
+    game.place([3, -5], new Piece(PieceType.Rook, PlayerColor.Black))
+    game.place([-2, -3], new Piece(PieceType.Knight, PlayerColor.Black))
+    game.place([2, -5], new Piece(PieceType.Knight, PlayerColor.Black))
+    game.place([0, -3], new Piece(PieceType.Bishop, PlayerColor.Black))
+    game.place([0, -4], new Piece(PieceType.Bishop, PlayerColor.Black))
+    game.place([0, -5], new Piece(PieceType.Bishop, PlayerColor.Black))
+    game.place([1, -5], new Piece(PieceType.King, PlayerColor.Black))
+    game.place([-1, -4], new Piece(PieceType.Queen, PlayerColor.Black))
+
+    game.populateValidMoves()
+    return game
+  }
+
+  constructor() {
+    this.board = new HexBoard()
+  }
+
+  private place(location: Axial, piece: Piece) {
+    this.board.place(location, piece)
+    this.pieces[piece.color].add(piece)
   }
 
   /**
    * Moves piece on board and switches turn
    */
   movePiece(start: Axial, end: Axial) {
-    this.board.movePiece(start, end)
-    this.turn = oppositeColor(this.turn)
+    const capturedPiece = this.board.movePiece(start, end)
+    if (capturedPiece) {
+      this.pieces[capturedPiece.color].delete(capturedPiece)
+    }
+    this.switchTurn()
+  }
+
+  switchTurn() {
+    this.playerTurn = oppositeColor(this.playerTurn)
+    this.populateValidMoves()
+  }
+
+  private populateValidMoves() {
+    for (const [_, piecesSet] of Object.entries(this.pieces)) {
+      for (const piece of piecesSet) {
+        piece.validMoves = this.board.getValidMoves(piece.hex)
+      }
+    }
+  }
+
+  isValidMove(from: Axial, [toQ, toR]: Axial): boolean {
+    return this.board.at(from).piece?.validMoves.some(([q, r]) => q === toQ && r == toR) ?? false
   }
 }
