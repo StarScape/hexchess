@@ -226,7 +226,6 @@ export class HexBoard {
     const pieceInNewHex = this.hexes[r2i][q2i]
     this.hexes[r2i][q2i] = pieceToMove
     this.hexes[r1i][q1i] = undefined
-    pieceToMove!.hasMoved = true
     pieceToMove!.hex = to
 
     return pieceInNewHex
@@ -235,11 +234,7 @@ export class HexBoard {
 
 export default class ChessGame {
   board: HexBoard
-  playerTurn: PlayerColor = PlayerColor.White
-  // pieces: Record<PlayerColor, Map<AxialAsJSON, Piece>> = {
-  //   [PlayerColor.Black]: new Map(),
-  //   [PlayerColor.White]: new Map()
-  // }
+  currentPlayer: PlayerColor = PlayerColor.White
   pieces: Record<PlayerColor, Set<Piece>> = {
     [PlayerColor.Black]: new Set(),
     [PlayerColor.White]: new Set()
@@ -295,8 +290,12 @@ export default class ChessGame {
     return game
   }
 
-  constructor() {
+  constructor(piecePlacementCallback?: (placePiece: (location: Axial, piece: Piece) => void) => void) {
     this.board = new HexBoard()
+    if (piecePlacementCallback) {
+      piecePlacementCallback(this.place.bind(this))
+      this.populateValidMoves()
+    }
   }
 
   private place(location: Axial, piece: Piece) {
@@ -308,28 +307,45 @@ export default class ChessGame {
    * Moves piece on board and switches turn
    */
   movePiece(start: Axial, end: Axial): Piece | undefined {
+    this.board.at(start)!.hasMoved = true
     const capturedPiece = this.board.movePiece(start, end)
     if (capturedPiece) {
       this.pieces[capturedPiece.color].delete(capturedPiece)
     }
-    this.switchTurn()
+    this.currentPlayer = oppositeColor(this.currentPlayer)
+    this.populateValidMoves()
+
     return capturedPiece
   }
 
-  switchTurn() {
-    this.playerTurn = oppositeColor(this.playerTurn)
-    this.populateValidMoves()
-  }
-
   private populateValidMoves() {
-    for (const [_, piecesSet] of Object.entries(this.pieces)) {
-      for (const piece of piecesSet) {
-        piece.validMoves = this.board.getValidMoves(piece.hex)
-      }
+    for (const currentPlayerPiece of this.pieces[this.currentPlayer]) {
+      const originalHex = currentPlayerPiece.hex
+      currentPlayerPiece.validMoves = this.board.getValidMoves(originalHex).filter((move) => {
+        // Move piece into potential position and see if it puts player in check
+        let currentPlayerInCheck = false
+        const captured = this.board.movePiece(originalHex, move)
+        for (const oppositeColorPiece of this.pieces[oppositeColor(this.currentPlayer)]) {
+          if (oppositeColorPiece === captured) continue
+
+          const oppositeColorPieceMoves = this.board.getValidMoves(oppositeColorPiece.hex)
+          currentPlayerInCheck = oppositeColorPieceMoves.some(hex =>
+            this.board.at(hex)?.color === this.currentPlayer && this.board.at(hex)?.type === PieceType.King
+          )
+          if (currentPlayerInCheck) break
+        }
+
+        // move back
+        this.board.movePiece(move, originalHex)
+        if (captured) {
+          this.board.place(move, captured)
+        }
+        return !currentPlayerInCheck
+      })
     }
   }
 
-  isValidMove(from: Axial, [toQ, toR]: Axial): boolean {
-    return this.board.at(from)?.validMoves.some(([q, r]) => q === toQ && r == toR) ?? false
+  isValidMove(from: Axial, to: Axial): boolean {
+    return this.board.at(from)?.validMoves.some(move => axialEquals(move, to)) ?? false
   }
 }

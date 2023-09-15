@@ -1,4 +1,5 @@
 import ChessGame, { HexBoard, Hex, Piece, PieceType, PlayerColor, Axial, axialEquals, HexColor } from './model/Game.ts'
+import { easyCheckMate } from './model/test_boards.ts'
 
 interface GraphicsInfo {
   canvas: HTMLCanvasElement
@@ -145,7 +146,7 @@ class GameUI {
   handleMovePiece(clicked: Axial) {
     const {game} = this
     const clickedPiece = game.board.at(clicked)
-    if (clickedPiece && clickedPiece.color === game.playerTurn) {
+    if (clickedPiece && clickedPiece.color === game.currentPlayer) {
       this.handleSelectPiece(clicked)
     } else {
       if (this.selectedHex && game.isValidMove(this.selectedHex, clicked)) {
@@ -159,7 +160,7 @@ class GameUI {
   handleSelectPiece(clicked: Axial) {
     const {game} = this
     const clickedPiece = game.board.at(clicked)
-    if (clickedPiece && clickedPiece.color === game.playerTurn) {
+    if (clickedPiece && clickedPiece.color === game.currentPlayer) {
       if (axialEquals(this.selectedHex, clicked)) {
         this.selectedHex = undefined
       } else {
@@ -172,7 +173,6 @@ class GameUI {
 
   addToCapturedRow(piece: Piece) {
     const row = document.querySelector(`#captured-by-${piece.color === PlayerColor.Black ? 'white' : 'black'}`)
-    console.log(row)
     if (row) {
       const {src} = images[piece.color][piece.type] as HTMLImageElement
       row.innerHTML = row.innerHTML + `<span><img width="35px" src="${src}"></span>`
@@ -181,7 +181,7 @@ class GameUI {
 }
 
 function updateTurnImg(game: ChessGame) {
-  const img = images[game.playerTurn][PieceType.Pawn] as HTMLImageElement
+  const img = images[game.currentPlayer][PieceType.Pawn] as HTMLImageElement
   (document.querySelector('#current-turn-img') as HTMLImageElement).src = img.src
 }
 
@@ -204,6 +204,7 @@ function main() {
   }
   // const game = new ChessGame(HexBoard.singlePieceBoard(PieceType.Knight))
   const game = ChessGame.defaultBoard()
+  // const game = easyCheckMate()
   const ui = new GameUI(game)
 
   drawBoard(game, ui, graphics)
