@@ -7,8 +7,8 @@ TODO:
 - [x] Knight movement
 - [x] Queen movement
 - [x] King movement
-- [ ] Get checkmate condition working
-- [ ] Prevent moving into check
+- [x] Get checkmate condition working
+- [x] Prevent moving into check
 - [ ] Pawn promotion
 - [ ] Network between two clients
 - [ ] En passant

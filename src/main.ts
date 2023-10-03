@@ -1,4 +1,4 @@
-import ChessGame, { HexBoard, Hex, Piece, PieceType, PlayerColor, Axial, axialEquals, HexColor } from './model/Game.ts'
+import ChessGame, { HexBoard, Hex, Piece, PieceType, PlayerColor, Axial, axialEquals, HexColor, oppositeColor } from './model/Game.ts'
 import { easyCheckMate } from './model/test_boards.ts'
 
 interface GraphicsInfo {
@@ -107,6 +107,11 @@ function drawPiece(px: number, py: number, piece: Piece, graphics: GraphicsInfo)
   ctx.drawImage(images[piece.color][piece.type], px - imgSize/2, py - imgSize/2, imgSize, imgSize)
 }
 
+function drawText(graphics: GraphicsInfo, text: string) {
+  graphics.ctx.font = "18px serif"
+  graphics.ctx.fillText(text, 10, 25)
+}
+
 function drawBoard(game: ChessGame, ui: GameUI, graphics: GraphicsInfo) {
   const {ctx, hexSizePx, canvasSizePx} = graphics
   graphics.ctx.clearRect(0, 0, graphics.canvasSizePx, graphics.canvasSizePx)
@@ -127,9 +132,10 @@ function drawBoard(game: ChessGame, ui: GameUI, graphics: GraphicsInfo) {
     }
   })
 
-  if (game.playerInCheck) {
-    graphics.ctx.font = "18px serif"
-    graphics.ctx.fillText(`${game.playerInCheck} is in check`, 10, 25)
+  if (game.checkmate) {
+    drawText(graphics, `Game over, ${game.currentPlayer} in checkmate.`)
+  } else if (game.playerInCheck) {
+    drawText(graphics, `${game.playerInCheck} is in check`)
   }
 }
 
@@ -143,10 +149,28 @@ function clickedLocation(clientX: number, clientY: number, graphics: GraphicsInf
 
 class GameUI {
   game: ChessGame
+  graphics: GraphicsInfo
   selectedHex?: Axial
 
-  constructor(game: ChessGame) {
+  constructor(game: ChessGame, graphics: GraphicsInfo) {
     this.game = game
+    this.graphics = graphics
+  }
+
+  handleClick(e: MouseEvent) {
+    const clicked = clickedLocation(e.clientX, e.clientY, this.graphics)
+    if (this.game.checkmate) {
+      return
+    }
+    if (HexBoard.isValidHex(clicked)) {
+      if (this.selectedHex) {
+        this.handleMovePiece(clicked)
+      } else {
+        this.handleSelectPiece(clicked)
+      }
+      drawBoard(this.game, this, this.graphics)
+      updateTurnImg(this.game)
+    }
   }
 
   handleMovePiece(clicked: Axial) {
@@ -208,25 +232,13 @@ function main() {
     canvasSizePx: canvasSize,
     hexSizePx: 40,
   }
-  // const game = new ChessGame(HexBoard.singlePieceBoard(PieceType.Knight))
   // const game = ChessGame.defaultBoard()
   const game = easyCheckMate()
-  const ui = new GameUI(game)
+  const ui = new GameUI(game, graphics)
 
   drawBoard(game, ui, graphics)
 
-  canvas.addEventListener('click', (e) => {
-    const clicked = clickedLocation(e.clientX, e.clientY, graphics)
-    if (HexBoard.isValidHex(clicked)) {
-      if (ui.selectedHex) {
-        ui.handleMovePiece(clicked)
-      } else {
-        ui.handleSelectPiece(clicked)
-      }
-      drawBoard(game, ui, graphics)
-      updateTurnImg(game)
-    }
-  })
+  canvas.addEventListener('click', (e) => ui.handleClick(e))
 }
 
 document.addEventListener('DOMContentLoaded', (_) => main())

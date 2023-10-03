@@ -18,7 +18,7 @@ export enum PlayerColor {
   White = "White"
 }
 
-function oppositeColor(c: PlayerColor): PlayerColor {
+export function oppositeColor(c: PlayerColor): PlayerColor {
   return c === PlayerColor.Black ? PlayerColor.White : PlayerColor.Black
 }
 
@@ -322,16 +322,15 @@ export default class ChessGame {
 
   private populateValidMoves() {
     this.playerInCheck = undefined
-    const playersInCheckmate = {
-      [PlayerColor.White]: true,
-      [PlayerColor.Black]: true,
-    }
+    let playerInCheckmate = true
     for (const color of Object.values(PlayerColor)) {
       for (const piece of this.pieces[color]) {
         const originalHex = piece.hex
         const potentialMoves = this.board.getValidMoves(originalHex)
         piece.validMoves = potentialMoves.filter(move => !this.movePutsPlayerInCheck(originalHex, move, color))
-        if (piece.validMoves.length > 0) playersInCheckmate[color] = false
+        if (piece.color === this.currentPlayer && piece.validMoves.length > 0) {
+          playerInCheckmate = false
+        }
 
         for (const move of piece.validMoves) {
           const checks = this.checkFor(move, oppositeColor(color))
@@ -343,15 +342,10 @@ export default class ChessGame {
       }
     }
 
-    if (playersInCheckmate[PlayerColor.White]) {
+    if (playerInCheckmate) {
       this.checkmate = true
-      console.log("White in CHECKMATE!")
+      console.log(`${this.currentPlayer} in CHECKMATE!`)
     }
-    else if (playersInCheckmate[PlayerColor.Black]) {
-      this.checkmate = true
-      console.log("Black in CHECKMATE!")
-    }
-
   }
 
   movePutsPlayerInCheck(from: Axial, to: Axial, color: PlayerColor): boolean {
