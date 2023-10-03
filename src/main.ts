@@ -109,6 +109,7 @@ function drawPiece(px: number, py: number, piece: Piece, graphics: GraphicsInfo)
 
 function drawBoard(game: ChessGame, ui: GameUI, graphics: GraphicsInfo) {
   const {ctx, hexSizePx, canvasSizePx} = graphics
+  graphics.ctx.clearRect(0, 0, graphics.canvasSizePx, graphics.canvasSizePx)
   game.board.forEach((hex) => {
     const [px, py] = axialToPixel(hex, hexSizePx, canvasSizePx)
     const piece = game.board.at(hex)
@@ -125,6 +126,11 @@ function drawBoard(game: ChessGame, ui: GameUI, graphics: GraphicsInfo) {
       drawPiece(px, py, piece, graphics)
     }
   })
+
+  if (game.playerInCheck) {
+    graphics.ctx.font = "18px serif"
+    graphics.ctx.fillText(`${game.playerInCheck} is in check`, 10, 25)
+  }
 }
 
 function clickedLocation(clientX: number, clientY: number, graphics: GraphicsInfo): [q: number, r: number] {
@@ -203,8 +209,8 @@ function main() {
     hexSizePx: 40,
   }
   // const game = new ChessGame(HexBoard.singlePieceBoard(PieceType.Knight))
-  const game = ChessGame.defaultBoard()
-  // const game = easyCheckMate()
+  // const game = ChessGame.defaultBoard()
+  const game = easyCheckMate()
   const ui = new GameUI(game)
 
   drawBoard(game, ui, graphics)

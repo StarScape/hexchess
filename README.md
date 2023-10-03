@@ -13,3 +13,6 @@ TODO:
 - [ ] Network between two clients
 - [ ] En passant
 - [ ] Animations
+
+
+https://www.figma.com/community/file/971870797656870866/Chess-Simple-Assets

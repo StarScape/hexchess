@@ -240,7 +240,7 @@ export default class ChessGame {
     [PlayerColor.White]: new Set()
   }
 
-  playerInCheck: PlayerColor | null = null
+  playerInCheck: PlayerColor | undefined = undefined
   checkmate: boolean = false
 
   /**
@@ -312,6 +312,8 @@ export default class ChessGame {
     if (capturedPiece) {
       this.pieces[capturedPiece.color].delete(capturedPiece)
     }
+
+    // Switch turn
     this.currentPlayer = oppositeColor(this.currentPlayer)
     this.populateValidMoves()
 
@@ -319,30 +321,61 @@ export default class ChessGame {
   }
 
   private populateValidMoves() {
-    for (const currentPlayerPiece of this.pieces[this.currentPlayer]) {
-      const originalHex = currentPlayerPiece.hex
-      currentPlayerPiece.validMoves = this.board.getValidMoves(originalHex).filter((move) => {
-        // Move piece into potential position and see if it puts player in check
-        let currentPlayerInCheck = false
-        const captured = this.board.movePiece(originalHex, move)
-        for (const oppositeColorPiece of this.pieces[oppositeColor(this.currentPlayer)]) {
-          if (oppositeColorPiece === captured) continue
-
-          const oppositeColorPieceMoves = this.board.getValidMoves(oppositeColorPiece.hex)
-          currentPlayerInCheck = oppositeColorPieceMoves.some(hex =>
-            this.board.at(hex)?.color === this.currentPlayer && this.board.at(hex)?.type === PieceType.King
-          )
-          if (currentPlayerInCheck) break
-        }
-
-        // move back
-        this.board.movePiece(move, originalHex)
-        if (captured) {
-          this.board.place(move, captured)
-        }
-        return !currentPlayerInCheck
-      })
+    this.playerInCheck = undefined
+    const playersInCheckmate = {
+      [PlayerColor.White]: true,
+      [PlayerColor.Black]: true,
     }
+    for (const color of Object.values(PlayerColor)) {
+      for (const piece of this.pieces[color]) {
+        const originalHex = piece.hex
+        const potentialMoves = this.board.getValidMoves(originalHex)
+        piece.validMoves = potentialMoves.filter(move => !this.movePutsPlayerInCheck(originalHex, move, color))
+        if (piece.validMoves.length > 0) playersInCheckmate[color] = false
+
+        for (const move of piece.validMoves) {
+          const checks = this.checkFor(move, oppositeColor(color))
+          if (checks) {
+            this.playerInCheck = oppositeColor(color)
+            break
+          }
+        }
+      }
+    }
+
+    if (playersInCheckmate[PlayerColor.White]) {
+      this.checkmate = true
+      console.log("White in CHECKMATE!")
+    }
+    else if (playersInCheckmate[PlayerColor.Black]) {
+      this.checkmate = true
+      console.log("Black in CHECKMATE!")
+    }
+
+  }
+
+  movePutsPlayerInCheck(from: Axial, to: Axial, color: PlayerColor): boolean {
+    // Move piece into potential position and see if it puts player in check
+    let check = false
+    const captured = this.board.movePiece(from, to)
+    for (const oppositeColorPiece of this.pieces[oppositeColor(color)]) {
+      if (oppositeColorPiece === captured) continue
+
+      const oppositeColorPieceMoves = this.board.getValidMoves(oppositeColorPiece.hex)
+      check = oppositeColorPieceMoves.some(hex => this.checkFor(hex, color))
+      if (check) break
+    }
+
+    // move back
+    this.board.movePiece(to, from)
+    if (captured) {
+      this.board.place(to, captured)
+    }
+    return check
+  }
+
+  checkFor(move: Axial, color: PlayerColor) {
+    return this.board.at(move)?.color === color && this.board.at(move)?.type === PieceType.King
   }
 
   isValidMove(from: Axial, to: Axial): boolean {
